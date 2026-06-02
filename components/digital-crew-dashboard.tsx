@@ -33,8 +33,8 @@ const INITIAL_STEPS: TimelineStep[] = [
   },
 ]
 
-const API_ENDPOINT = "https://pronto-hut-relearn.ngrok-free.dev/analyze"
-
+// DELETE THIS LINE
+const API_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/analyze`;
 const CHANNEL_STEP_INDEX: Record<AssetChannel, number> = {
   blueprint: 2, // Builder agent
   pitch: 3, // Salesman agent
@@ -153,7 +153,11 @@ export function DigitalCrewDashboard() {
     startSpinnerCycle()
 
     try {
-      const res = await fetch(API_ENDPOINT, {
+      // 1. Get the URL from environment variables, or default to your backend
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || "https://digital-crew-backend.onrender.com";
+
+// 2. Fetch from the dynamic URL
+const res = await fetch(`${baseUrl}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: target }),
