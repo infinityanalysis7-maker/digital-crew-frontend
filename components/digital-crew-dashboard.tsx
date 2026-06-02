@@ -39,16 +39,18 @@ const CHANNEL_STEP_INDEX: Record<AssetChannel, number> = {
   scout: 1, // Scout agent
   blueprint: 2, // Builder agent
   pitch: 3, // Salesman agent
-  linkedin: 3, // Salesman agent
+  review: 3, // Reviewer agent (same step)
+  linkedin: 4, // LinkedIn agent
 }
 
-type AssetChannel = "scout" | "blueprint" | "pitch" | "linkedin"
+type AssetChannel = "scout" | "blueprint" | "pitch" | "review" | "linkedin"
 
 function resolveChannel(name: unknown): AssetChannel | null {
   if (typeof name !== "string") return null
   const key = name.toLowerCase()
   if (key.includes("scout") || key.includes("analysis") || key.includes("flaw")) return "scout"
   if (key.includes("builder") || key.includes("blueprint") || key.includes("architecture")) return "blueprint"
+  if (key.includes("review") || key.includes("alignment") || key.includes("quality")) return "review"
   if (key.includes("linkedin")) return "linkedin"
   if (key.includes("salesman") || key.includes("pitch") || key.includes("email")) return "pitch"
   return null
@@ -62,6 +64,7 @@ export function DigitalCrewDashboard() {
   const [scout, setScout] = useState("")
   const [blueprint, setBlueprint] = useState("")
   const [pitch, setPitch] = useState("")
+  const [review, setReview] = useState("")
   const [linkedin, setLinkedin] = useState("")
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -104,6 +107,7 @@ export function DigitalCrewDashboard() {
     if (channel === "scout") setScout((prev) => prev + delta)
     else if (channel === "blueprint") setBlueprint((prev) => prev + delta)
     else if (channel === "pitch") setPitch((prev) => prev + delta)
+    else if (channel === "review") setReview((prev) => prev + delta)
     else if (channel === "linkedin") setLinkedin((prev) => prev + delta)
 
     const activeIndex = CHANNEL_STEP_INDEX[channel]
@@ -151,6 +155,7 @@ export function DigitalCrewDashboard() {
     setScout("")
     setBlueprint("")
     setPitch("")
+    setReview("")
     setLinkedin("")
     setStarted(true)
     setIsRunning(true)
@@ -217,6 +222,7 @@ const res = await fetch(`${baseUrl}/analyze`, {
             setScout(parsed?.scout_analysis ?? "")
             setBlueprint(parsed?.builder_blueprint ?? "")
             setPitch(parsed?.salesman_pitch ?? "")
+            setReview(parsed?.review_status ?? "")
             setLinkedin(parsed?.linkedin_pitch ?? "")
           } else {
             routeStreamEvent(parsed)
@@ -330,12 +336,19 @@ const res = await fetch(`${baseUrl}/analyze`, {
                 placeholder={isRunning ? "// Salesman agent compiling pitch..." : "// Awaiting salesman output..."}
               />
               <CodeWindow
+                title="Quality Review Status"
+                icon={<Cpu className="size-4" />}
+                content={review}
+                accent="emerald"
+                placeholder={isRunning ? "// Reviewer checking alignment..." : "// Awaiting review..."}
+              />
+              <CodeWindow
                 title="LinkedIn Outreach Asset"
                 icon={<Linkedin className="size-4" />}
                 content={linkedin}
                 accent="purple"
                 copyable
-                placeholder={isRunning ? "// Salesman agent drafting LinkedIn outreach..." : "// Awaiting LinkedIn output..."}
+                placeholder={isRunning ? "// LinkedIn agent drafting outreach..." : "// Awaiting LinkedIn output..."}
               />
             </div>
           </div>
