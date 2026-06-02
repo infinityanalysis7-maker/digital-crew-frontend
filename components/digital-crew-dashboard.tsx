@@ -34,18 +34,20 @@ const INITIAL_STEPS: TimelineStep[] = [
 ]
 
 // DELETE THIS LINE
-const API_ENDPOINT = `${process.env.NEXT_PUBLIC_API_URL}/analyze`;
+const API_ENDPOINT = `${(process.env as any).NEXT_PUBLIC_API_URL}/analyze`;
 const CHANNEL_STEP_INDEX: Record<AssetChannel, number> = {
+  scout: 1, // Scout agent
   blueprint: 2, // Builder agent
   pitch: 3, // Salesman agent
   linkedin: 3, // Salesman agent
 }
 
-type AssetChannel = "blueprint" | "pitch" | "linkedin"
+type AssetChannel = "scout" | "blueprint" | "pitch" | "linkedin"
 
 function resolveChannel(name: unknown): AssetChannel | null {
   if (typeof name !== "string") return null
   const key = name.toLowerCase()
+  if (key.includes("scout") || key.includes("analysis") || key.includes("flaw")) return "scout"
   if (key.includes("builder") || key.includes("blueprint") || key.includes("architecture")) return "blueprint"
   if (key.includes("linkedin")) return "linkedin"
   if (key.includes("salesman") || key.includes("pitch") || key.includes("email")) return "pitch"
@@ -57,6 +59,7 @@ export function DigitalCrewDashboard() {
   const [steps, setSteps] = useState<TimelineStep[]>(INITIAL_STEPS)
   const [isRunning, setIsRunning] = useState(false)
   const [started, setStarted] = useState(false)
+  const [scout, setScout] = useState("")
   const [blueprint, setBlueprint] = useState("")
   const [pitch, setPitch] = useState("")
   const [linkedin, setLinkedin] = useState("")
@@ -98,7 +101,8 @@ export function DigitalCrewDashboard() {
 
   function appendToChannel(channel: AssetChannel, delta: string) {
     if (!delta) return
-    if (channel === "blueprint") setBlueprint((prev) => prev + delta)
+    if (channel === "scout") setScout((prev) => prev + delta)
+    else if (channel === "blueprint") setBlueprint((prev) => prev + delta)
     else if (channel === "pitch") setPitch((prev) => prev + delta)
     else if (channel === "linkedin") setLinkedin((prev) => prev + delta)
 
@@ -144,6 +148,7 @@ export function DigitalCrewDashboard() {
     if (!target || isRunning) return
 
     setError(null)
+    setScout("")
     setBlueprint("")
     setPitch("")
     setLinkedin("")
@@ -209,6 +214,7 @@ const res = await fetch(`${baseUrl}/analyze`, {
         try {
           const parsed = JSON.parse(payload)
           if (!sawEvent) {
+            setScout(parsed?.scout_analysis ?? "")
             setBlueprint(parsed?.builder_blueprint ?? "")
             setPitch(parsed?.salesman_pitch ?? "")
             setLinkedin(parsed?.linkedin_pitch ?? "")
@@ -301,6 +307,13 @@ const res = await fetch(`${baseUrl}/analyze`, {
 
             {/* EXPANDED COLUMN CONTAINER: Grid allows cards to claim much wider spacing footprints */}
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              <CodeWindow
+                title="Scout Analysis: Critical Flaws"
+                icon={<AlertTriangle className="size-4" />}
+                content={scout}
+                accent="red"
+                placeholder={isRunning ? "// Scout agent analyzing flaws..." : "// Awaiting scout analysis..."}
+              />
               <CodeWindow
                 title="Technical Upgrade Architecture"
                 icon={<Cpu className="size-4" />}
